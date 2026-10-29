@@ -1,0 +1,201 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Employee Salary Dashboard</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+        header {
+            background: #172554;
+            color: white;
+            padding: 24px 5%;
+        }
+        header h1 { margin: 0 0 8px; }
+        header p { margin: 0; color: #cbd5e1; }
+        main { max-width: 1250px; margin: 28px auto; padding: 0 20px; }
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 18px;
+            margin: 20px 0;
+        }
+        .card, .panel {
+            background: white;
+            padding: 22px;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px #0000000a;
+        }
+        .card h3 { color: #64748b; font-size: 14px; }
+        .number { font-size: 30px; font-weight: bold; color: #1d4ed8; }
+        .panel { margin: 22px 0; overflow: hidden; }
+        h2 { margin-top: 0; }
+        form {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        input, select, button {
+            padding: 11px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        button { background: #1d4ed8; color: white; cursor: pointer; }
+        a { color: #1d4ed8; }
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 750px; }
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 14px;
+        }
+        th { background: #eff6ff; }
+        .money { color: #047857; font-weight: bold; }
+        .empty { text-align: center; padding: 20px; color: #64748b; }
+        footer { text-align: center; padding: 20px; color: #64748b; }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Employee Salary Management System</h1>
+    <p>Employee Records | Departments | Payroll Analytics</p>
+</header>
+
+<main>
+    <h2>Dashboard Overview</h2>
+
+    <div class="cards">
+        <div class="card">
+            <h3>Total Employees</h3>
+            <div class="number">{{ total_employees }}</div>
+        </div>
+        <div class="card">
+            <h3>Active Employees</h3>
+            <div class="number">{{ active_employees }}</div>
+        </div>
+        <div class="card">
+            <h3>Total Payroll Records</h3>
+            <div class="number">{{ total_payrolls }}</div>
+        </div>
+    </div>
+
+    <section class="panel">
+        <h2>Department-wise Employees</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Department</th>
+                        <th>Employee Count</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in departments %}
+                    <tr>
+                        <td>{{ item.department_name }}</td>
+                        <td>{{ item.employee_count }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="2">No departments found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>Monthly Salary Summary</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Salary Month</th>
+                        <th>Gross Total</th>
+                        <th>Deductions</th>
+                        <th>Net Salary Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in monthly_summary %}
+                    <tr>
+                        <td>{{ item.salary_month }}</td>
+                        <td>₹{{ "%.2f"|format(item.total_gross or 0) }}</td>
+                        <td>₹{{ "%.2f"|format(item.total_deductions or 0) }}</td>
+                        <td class="money">₹{{ "%.2f"|format(item.total_net or 0) }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4">No salary data available.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="panel">
+        <h2>Search and Filter Payroll</h2>
+        <form method="GET" action="/">
+            <input type="text" name="search"
+                   placeholder="Search employee name"
+                   value="{{ search }}">
+
+            <select name="department">
+                <option value="">All Departments</option>
+                {% for item in departments %}
+                <option value="{{ item.department_name }}"
+                    {% if selected_department == item.department_name %}selected{% endif %}>
+                    {{ item.department_name }}
+                </option>
+                {% endfor %}
+            </select>
+
+            <input type="month" name="month" value="{{ selected_month }}">
+            <button type="submit">Apply Filters</button>
+            <a href="/">Clear</a>
+        </form>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Payroll ID</th>
+                        <th>Employee</th>
+                        <th>Department</th>
+                        <th>Month</th>
+                        <th>Gross Salary</th>
+                        <th>Deductions</th>
+                        <th>Net Salary</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in payrolls %}
+                    <tr>
+                        <td>{{ p.payroll_id }}</td>
+                        <td>{{ p.employee_name }}</td>
+                        <td>{{ p.department_name or 'Not Assigned' }}</td>
+                        <td>{{ p.salary_month }}</td>
+                        <td>₹{{ "%.2f"|format(p.gross_salary) }}</td>
+                        <td>₹{{ "%.2f"|format(p.total_deductions) }}</td>
+                        <td class="money">₹{{ "%.2f"|format(p.net_salary) }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="7" class="empty">No matching payroll records.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<footer>Python + Flask + MySQL | Employee Salary Management System</footer>
+</body>
+</html>
